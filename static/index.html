@@ -31,6 +31,7 @@
 var canvas = document.getElementById('c');
 var host = window.location.host;
 var context = canvas.getContext("2d");
+//Looked at some code on https://www.w3schools.com/html/html5_canvas.asp 
 var W = canvas.width  = window.innerWidth-6;
 var H = canvas.height = window.innerHeight-50;
 var wscounter = 0;
@@ -44,24 +45,42 @@ debug("Test");
 
 world = {};
 
-//XXX: TODO Make this prettier!
+//XXX: TODO Make this prettier! 
+//Looked at some code on https://www.w3schools.com/html/html5_canvas.asp 
 function drawCircle(context,entity) {
     with(context) {
         beginPath();                
         lineWidth = 3;
         var x = entity["x"];
         var y = entity["y"];
+
+        var grd = context.createRadialGradient(75,50,5,90,60,100);
+        grd.addColorStop(0,"red");
+        grd.addColorStop(1,"yellow");
         //moveTo(x,y);
-        fillStyle = entity["colour"];
+        //fillStyle = entity["colour"];
+        
+        context.shadowBlur=20;
+        context.shadowColor="white";
+        context.fillStyle = grd
+        //context.fillStyle = grd;
+        //context.fillRect(10,10,150,80);
+        //var gradient1=ctx.createLinearGradient(0,0,170,0);
+        //gradient1.addColorStop("0","magenta");
+        //gradient1.addColorStop("0.5","blue");
+        //gradient1.addColorStop("1.0","red");
+        //context.strokeStyle=gradient1;
+        //context.lineWidth=5;
+        //context.strokeRect(20,20,150,100);
         strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
+        arc(x, y, (entity["radius"])?entity["radius"]:40, 0, 2.0 * Math.PI, false);  
         stroke();                                
     }
 }
 
 function prepEntity(entity) {
     if (!entity["colour"]) {
-        entity["colour"] = "#FF0000";
+        entity["colour"] = "#0021ff";
     }
     if (!entity["radius"]) {
         entity["radius"] = 50;
@@ -123,7 +142,10 @@ function getPosition(e) {
 
 function addEntity(entity, data) {
     world[entity] = data;
-    drawNextFrame(); // (but should we?)
+    //drawNextFrame(); // (but should we?) No
+    var update_stuff = {};
+    update_stuff[entity] = data;
+    socket.send(JSON.stringify(update_stuff));
     //XXX: Send a XHTML Request that updates the entity you just modified!
 }
 var counter = 0;
@@ -249,11 +271,14 @@ function update() {
 }
 
 
+
 function wsSetup() {
     var url = "ws://"+host+"/subscribe";   
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+        //let the server know my world
+        socket.send(JSON.stringify(world))
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
@@ -261,7 +286,14 @@ function wsSetup() {
     socket.onmessage = function(msg) {  
         try {
             debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            //XXX: TODO What are you going to do here?
+            var response = JSON.parse(msg.data);
+            for (var entity in response) 
+            {   
+                world[entity] = response[entity];
+            }
+            drawNextFrame();
+
         } catch (e) {
             alert("socket on message: " + e);
         }

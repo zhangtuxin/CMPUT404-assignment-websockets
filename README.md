@@ -57,3 +57,9 @@ Contributors
 
 * Mark Galloway
 * Abram Hindle
+
+
+References:
+Websockets Example from Abram Hindle
+https://github.com/abramhindle/WebSocketsExamples/blob/master/chat.py
+https://www.w3schools.com/html/html5_canvas.asp
